@@ -142,6 +142,8 @@ class BaseRequest(object):
        data.
     """
 
+    asgi = False
+
     #: the charset for the request, defaults to utf-8
     charset = 'utf-8'
 
