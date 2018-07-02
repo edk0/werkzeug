@@ -7,6 +7,9 @@ from werkzeug.wrappers import Request, Response
 
 
 class SynchronizedInputStream(RawIOBase):
+    """A synchronous stream constructed from an asynchronous event source.
+
+    To be avoided; this should not be merged."""
     def __init__(self, receiver, loop):
         self.receiver = receiver
         self.loop = loop
