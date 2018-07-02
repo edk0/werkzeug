@@ -363,6 +363,24 @@ class BaseRequest(object):
                                            self.max_content_length,
                                            self.parameter_storage_class)
 
+    def _get_form_data(self):
+        """Method used to implement `_load_form_data`.  Returns a tuple of
+        (stream, form, files).  Should be called at most once.
+
+        .. versionadded:: 0.15
+        """
+        if self.want_form_data_parsed:
+            content_type = self.environ.get('CONTENT_TYPE', '')
+            content_length = get_content_length(self.environ)
+            mimetype, options = parse_options_header(content_type)
+            parser = self.make_form_data_parser()
+            data = parser.parse(self._get_stream_for_parsing(),
+                                mimetype, content_length, options)
+        else:
+            data = (self.stream, self.parameter_storage_class(),
+                    self.parameter_storage_class())
+        return data
+
     def _load_form_data(self):
         """Method used internally to retrieve submitted data.  After calling
         this sets `form` and `files` on the request object to multi dicts
@@ -378,16 +396,7 @@ class BaseRequest(object):
 
         _assert_not_shallow(self)
 
-        if self.want_form_data_parsed:
-            content_type = self.environ.get('CONTENT_TYPE', '')
-            content_length = get_content_length(self.environ)
-            mimetype, options = parse_options_header(content_type)
-            parser = self.make_form_data_parser()
-            data = parser.parse(self._get_stream_for_parsing(),
-                                mimetype, content_length, options)
-        else:
-            data = (self.stream, self.parameter_storage_class(),
-                    self.parameter_storage_class())
+        data = self._get_form_data()
 
         # inject the values into the instance dict so that we bypass
         # our cached_property non-data descriptor.
