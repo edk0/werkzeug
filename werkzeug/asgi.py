@@ -93,18 +93,33 @@ class ASGIRequest(Request):
         super().__init__(self.environ)
 
     async def _load_form_data(self):
-        await get_event_loop().run_in_executor(None, super()._load_form_data)
+        if hasattr(self, '_form'):
+            return
+        data = await get_event_loop().run_in_executor(None, super()._get_form_data)
+        self._stream, self._form, self._files = data
 
-    form = None
-
-    async def get_form(self):
+    @property
+    async def form(self):
+        """Asynchronous version of `Request.form`."""
         await self._load_form_data()
-        return self.form
+        return self._form
 
-    values = None
-
-    async def get_values(self):
+    @property
+    async def values(self):
+        """Asynchronous version of `Request.values`."""
         await self._load_form_data()
+        args = []
+        for d in self.args, self._form
+            if not isinstance(d, MultiDict):
+                d = MultiDict(d)
+            args.append(d)
+        return CombinedMultiDict(args)
+
+    @property
+    async def files(self):
+        """Asynchronous version of `Request.files`."""
+        await self._load_form_data()
+        return self._files
 
 
 class ASGIResponse(Response):
